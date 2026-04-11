@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.token.email == "aliessoudani412@gmail.com");
+    }
+
+    function isEmployee() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'employee']);
+    }
+
+    // User profiles
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == uid);
+    }
+
+    // Rooms
+    match /rooms/{roomId} {
+      allow read: if true; // Publicly viewable
+      allow write: if isAdmin();
+    }
+
+    // Bookings
+    match /bookings/{bookingId} {
+      allow read: if isEmployee();
+      allow create: if true; // Guests can create
+      allow update, delete: if isEmployee();
+    }
+
+    // Transactions
+    match /transactions/{transactionId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Chat
+    match /chat/{messageId} {
+      allow read, create: if isEmployee();
+      allow update, delete: if false;
+    }
+  }
+}
