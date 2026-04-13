@@ -57,7 +57,24 @@ export default function AdminDashboard() {
     { id: 'chat', label: 'Team Chat', icon: MessageSquare },
   ];
 
+  const [isSeeding, setIsSeeding] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSeed = async () => {
+    if (!window.confirm('This will reset/populate the database with sample data. Continue?')) return;
+    setIsSeeding(true);
+    try {
+      const res = await fetch('/api/seed');
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast.success('Database seeded successfully');
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error.message || 'Seed failed');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -146,6 +163,16 @@ export default function AdminDashboard() {
             {activeSection.replace('-', ' ')}
           </h2>
           <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSeed} 
+              disabled={isSeeding}
+              className="rounded-full gap-2 border-orange-200 text-orange-600 hover:bg-orange-50"
+            >
+              {isSeeding ? <Loader2 className="animate-spin h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+              {isSeeding ? 'Seeding...' : 'Seed DB'}
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 

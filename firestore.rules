@@ -24,17 +24,28 @@ service cloud.firestore {
       allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == uid);
     }
 
-    // Rooms
-    match /rooms/{roomId} {
-      allow read: if true; // Publicly viewable
+    // Room Types
+    match /roomTypes/{roomTypeId} {
+      allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Availability
+    match /availability/{availabilityId} {
+      allow read: if true;
+      allow write: if true; // In a production app, this should be more restricted (e.g., only via server actions or specific logic)
     }
 
     // Bookings
     match /bookings/{bookingId} {
       allow read: if isEmployee();
-      allow create: if true; // Guests can create
+      allow create: if true;
       allow update, delete: if isEmployee();
+    }
+
+    // Locks
+    match /locks/{lockId} {
+      allow read, write: if true; // Needed for client-side locking
     }
 
     // Transactions
@@ -42,10 +53,10 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Chat
-    match /chat/{messageId} {
-      allow read, create: if isEmployee();
-      allow update, delete: if false;
+    // Room Mappings
+    match /roomMappings/{mappingId} {
+      allow read: if isEmployee();
+      allow write: if isAdmin();
     }
   }
 }

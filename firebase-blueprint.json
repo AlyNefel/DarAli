@@ -13,35 +13,73 @@
       },
       "required": ["uid", "email", "role"]
     },
-    "Room": {
-      "title": "Room",
-      "description": "Hotel room details",
+    "RoomType": {
+      "title": "RoomType",
+      "description": "Hotel room categories and pricing",
       "type": "object",
       "properties": {
-        "number": { "type": "string" },
-        "type": { "type": "string", "enum": ["luxury", "deluxe", "standard"] },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "totalInventory": { "type": "number" },
+        "description": { "type": "string" },
         "price": { "type": "number" },
-        "status": { "type": "string", "enum": ["available", "occupied", "maintenance"] },
-        "images": { "type": "array", "items": { "type": "string" } },
-        "description": { "type": "string" }
+        "baseCapacity": { "type": "number" },
+        "maxCapacity": { "type": "number" },
+        "icalImportUrl": { "type": "string" }
       },
-      "required": ["number", "type", "price", "status"]
+      "required": ["name", "slug", "totalInventory", "price"]
     },
     "Booking": {
       "title": "Booking",
       "description": "Room reservations",
       "type": "object",
       "properties": {
-        "guestName": { "type": "string" },
-        "guestEmail": { "type": "string", "format": "email" },
-        "roomId": { "type": "string" },
+        "source": { "type": "string", "enum": ["website", "booking", "manual"] },
         "checkIn": { "type": "string", "format": "date-time" },
         "checkOut": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
-        "totalPrice": { "type": "number" },
-        "source": { "type": "string" }
+        "roomTypeId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "staying", "completed"] },
+        "guestInfo": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "phone": { "type": "string" }
+          },
+          "required": ["name", "email"]
+        },
+        "totalAmount": { "type": "number" },
+        "externalId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["guestName", "roomId", "checkIn", "checkOut", "status"]
+      "required": ["source", "checkIn", "checkOut", "roomTypeId", "status", "guestInfo", "createdAt"]
+    },
+    "Availability": {
+      "title": "Availability",
+      "description": "Daily inventory tracking",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date-time" },
+        "roomTypeId": { "type": "string" },
+        "total": { "type": "number" },
+        "booked": { "type": "number" },
+        "locked": { "type": "number" },
+        "available": { "type": "number" }
+      },
+      "required": ["date", "roomTypeId", "total", "booked", "locked", "available"]
+    },
+    "Lock": {
+      "title": "Lock",
+      "description": "Temporary booking locks",
+      "type": "object",
+      "properties": {
+        "roomTypeId": { "type": "string" },
+        "checkIn": { "type": "string", "format": "date-time" },
+        "checkOut": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "sessionId": { "type": "string" }
+      },
+      "required": ["roomTypeId", "checkIn", "checkOut", "expiresAt", "sessionId"]
     },
     "Transaction": {
       "title": "Transaction",
@@ -50,31 +88,33 @@
       "properties": {
         "type": { "type": "string", "enum": ["income", "expense"] },
         "amount": { "type": "number" },
-        "category": { "type": "string" },
         "description": { "type": "string" },
+        "category": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
         "bookingId": { "type": "string" }
       },
       "required": ["type", "amount", "date"]
     },
-    "ChatMessage": {
-      "title": "ChatMessage",
-      "description": "Internal employee chat messages",
+    "RoomMapping": {
+      "title": "RoomMapping",
+      "description": "Mappings between internal and external room IDs",
       "type": "object",
       "properties": {
-        "senderId": { "type": "string" },
-        "senderName": { "type": "string" },
-        "text": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "internalRoomId": { "type": "string" },
+        "provider": { "type": "string" },
+        "externalRoomId": { "type": "string" },
+        "icalUrl": { "type": "string" }
       },
-      "required": ["senderId", "text", "timestamp"]
+      "required": ["internalRoomId", "provider"]
     }
   },
   "firestore": {
     "/users/{uid}": { "schema": "User", "description": "User profiles" },
-    "/rooms/{roomId}": { "schema": "Room", "description": "Hotel rooms" },
+    "/roomTypes/{roomTypeId}": { "schema": "RoomType", "description": "Room categories" },
     "/bookings/{bookingId}": { "schema": "Booking", "description": "Reservations" },
+    "/availability/{availabilityId}": { "schema": "Availability", "description": "Inventory" },
+    "/locks/{lockId}": { "schema": "Lock", "description": "Temporary locks" },
     "/transactions/{transactionId}": { "schema": "Transaction", "description": "Accounting" },
-    "/chat/{messageId}": { "schema": "ChatMessage", "description": "Internal chat" }
+    "/roomMappings/{mappingId}": { "schema": "RoomMapping", "description": "Provider mappings" }
   }
 }
